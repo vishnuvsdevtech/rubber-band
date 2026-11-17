@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Rubber Band — scroll that pushes back</title>
+<meta name="description" content="Elastic overscroll, momentum with friction, and end-of-list resistance. Constraint is what makes an interface feel authored.">
+<meta name="theme-color" content="#0a0806">
+<link rel="canonical" href="https://vishnuvsdevtech.github.io/rubber-band/">
+<style>
+:root{--bg:#0a0806;--card:#17120c;--line:rgba(255,225,180,.10);--line2:rgba(255,225,180,.18);
+ --ink:#f6ecdc;--ink2:#c4b49c;--muted:#8a7a63;--acc:#ffb545;
+ --mono:ui-monospace,'SF Mono',Menlo,monospace;--sans:'Geist',ui-sans-serif,system-ui,sans-serif}
+*{box-sizing:border-box}html,body{margin:0}
+body{background:var(--bg);color:var(--ink);font:15px/1.6 var(--sans);
+ background-image:radial-gradient(90% 70% at 50% 0%,#1c1509 0%,#0a0806 62%);
+ min-height:100vh;overflow-x:hidden}
+.wrap{max-width:1000px;margin:0 auto;padding:clamp(18px,4vw,40px) clamp(16px,4vw,34px) 60px}
+header{display:flex;justify-content:space-between;align-items:baseline;gap:14px;flex-wrap:wrap;margin-bottom:22px}
+h1{font-size:clamp(20px,3.2vw,30px);letter-spacing:-.02em;margin:0;font-weight:600}
+h1 em{font-style:normal;color:var(--acc)}
+.tag{font:10px var(--mono);letter-spacing:.16em;text-transform:uppercase;color:var(--muted)}
+.sect{font:10px var(--mono);letter-spacing:.16em;text-transform:uppercase;color:var(--muted);margin:26px 0 10px}
+/* ---- vertical elastic scroller ---- */
+.viewport{position:relative;height:min(58vh,420px);border:1px solid var(--line2);border-radius:14px;
+ overflow:hidden;background:var(--card);touch-action:none}
+.content{will-change:transform}
+.item{border-bottom:1px solid var(--line);padding:15px 18px;display:flex;gap:14px;align-items:baseline}
+.item b{font:600 9.5px var(--mono);letter-spacing:.12em;color:var(--acc);min-width:56px}
+.item span{font-size:13.5px;color:var(--ink2)}
+.tension{position:absolute;left:0;right:0;height:3px;background:transparent}
+.tension.top{top:0}.tension.bot{bottom:0}
+.tension i{display:block;height:100%;width:0;background:var(--acc);transition:width .06s linear}
+.fade{position:absolute;left:0;right:0;height:40px;pointer-events:none}
+.fade.t{top:0;background:linear-gradient(var(--card),transparent)}
+.fade.b{bottom:0;background:linear-gradient(transparent,var(--card))}
+/* ---- horizontal fling shelf ---- */
+.shelfWrap{position:relative;border:1px solid var(--line2);border-radius:14px;overflow:hidden;
+ background:linear-gradient(180deg,#140f0a,#0d0a07);padding:18px 0;touch-action:pan-y}
+.shelf{display:flex;gap:12px;padding:0 18px;will-change:transform}
+.tile{flex:0 0 auto;width:190px;height:118px;border:1px solid var(--line2);border-radius:11px;
+ background:var(--card);padding:13px 15px;will-change:transform;
+ background-image:linear-gradient(150deg,rgba(255,181,69,.07),transparent)}
+.tile b{display:block;font:600 9.5px var(--mono);letter-spacing:.13em;color:var(--acc);margin-bottom:6px}
+.tile h3{margin:0 0 3px;font-size:13.5px}
+.tile p{margin:0;font-size:11px;color:var(--muted);line-height:1.4}
+.meter{display:flex;gap:18px;margin-top:8px;font:10px var(--mono);letter-spacing:.1em;
+ text-transform:uppercase;color:var(--muted)}
+.meter b{color:var(--acc);font-weight:400}
+footer{margin-top:34px;font:10px var(--mono);letter-spacing:.1em;color:var(--muted);
+ text-transform:uppercase;border-top:1px solid var(--line);padding-top:14px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>Scroll that <em>pushes back</em></h1>
+    <span class="tag">elastic · momentum · resistance</span>
+  </header>
+
+  <div class="sect">01 — overscroll</div>
+  <div class="viewport" id="vp">
+    <div class="tension top"><i id="tTop"></i></div>
+    <div class="content" id="content">
+      <div class="item"><b>FIELD 01</b><span>Pull past the top and the page resists, then springs home.</span></div>
+      <div class="item"><b>FIELD 02</b><span>Resistance grows as you pull: the limit is felt, not stated.</span></div>
+      <div class="item"><b>FIELD 03</b><span>Release and a spring — not an ease — returns it.</span></div>
+      <div class="item"><b>FIELD 04</b><span>This list is deliberately long enough to scroll.</span></div>
+      <div class="item"><b>FIELD 05</b><span>Momentum decays with friction, not a fixed duration.</span></div>
+      <div class="item"><b>FIELD 06</b><span>Wheel, drag, or trackpad all feed the same offset.</span></div>
+      <div class="item"><b>FIELD 07</b><span>The tension bar shows the excess you are holding.</span></div>
+      <div class="item"><b>FIELD 08</b><span>Nothing here is native scrolling.</span></div>
+      <div class="item"><b>FIELD 09</b><span>Which is the point: native scroll cannot overscroll like this.</span></div>
+      <div class="item"><b>FIELD 10</b><span>Bottom reached. Keep pulling.</span></div>
+    </div>
+    <div class="tension bot"><i id="tBot"></i></div>
+    <div class="fade t"></div><div class="fade b"></div>
+  </div>
+
+  <div class="sect">02 — fling</div>
+  <div class="shelfWrap" id="shelfWrap">
+    <div class="shelf" id="shelf">
+      <div class="tile"><b>TILE 01</b><h3>Drag it</h3><p>Throw sideways and it keeps going.</p></div>
+      <div class="tile"><b>TILE 02</b><h3>Friction</h3><p>Velocity decays 6% per frame.</p></div>
+      <div class="tile"><b>TILE 03</b><h3>Bank shot</h3><p>Hit the end and it bounces back.</p></div>
+      <div class="tile"><b>TILE 04</b><h3>Tilt</h3><p>Tiles lean into their own velocity.</p></div>
+      <div class="tile"><b>TILE 05</b><h3>No snap</h3><p>No pagination, no carousel dots.</p></div>
+      <div class="tile"><b>TILE 06</b><h3>End</h3><p>Pull past this and feel the wall.</p></div>
+    </div>
+  </div>
+  <div class="meter"><span>offset <b id="mOff">0</b></span><span>velocity <b id="mV">0</b></span>
+    <span>tension <b id="mT">0</b></span></div>
+
+  <footer>Rubber Band · POC — the maths of constraint</footer>
+</div>
+<script src="assets/app.js"></script>
+</body>
+</html>
